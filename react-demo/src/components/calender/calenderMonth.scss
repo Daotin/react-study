@@ -1,0 +1,63 @@
+.calendar-month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+
+  &-weekdays {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(7, 1fr);
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-align: center;
+    // border: 1px solid #eee;
+    background: #f1f1f1;
+    margin-bottom: 0;
+    border-bottom: 1px solid #eee;
+    border-top: 1px solid #eee;
+    div {
+      padding: 8px 0;
+      font-size: 14px;
+      color: #666;
+      border-right: 1px solid #eee;
+    }
+  }
+  &-days {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(7, 1fr);
+    grid-auto-rows: 40px;
+  }
+
+  &-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    color: #333;
+    &:hover {
+      background: #f9f9f9;
+      cursor: pointer;
+    }
+
+    // 第一列左边框
+    &:nth-child(7n + 1) {
+      border-left: 1px solid #eee;
+    }
+
+    &.is-selected {
+      background: #f0f8ff;
+      color: #007bff;
+      font-weight: bold;
+      border: 1px solid #007bff;
+    }
+  }
+
+  &-day.is-outside {
+    color: #bbb;
+  }
+}

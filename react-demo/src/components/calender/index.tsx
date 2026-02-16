@@ -1,104 +1,91 @@
-import { useState, useRef, forwardRef, useImperativeHandle } from "react";
-// import { useMergeState } from "../../hooks/useMergeState";
+import dayjs, { Dayjs } from "dayjs";
+import { useEffect, useState } from "react";
 import { useControllableValue } from "ahooks";
-import "./index.css";
+import CalenderHeader from "./calenderHeader";
+import CalenderMonth from "./calenderMonth";
+import "./index.scss";
+import classNames from "classnames";
+import LocaleContent from "./LocaleContext";
+export interface CalenderProps {
+  value?: Dayjs;
+  defaultValue?: Dayjs;
+  curMonth?: Dayjs;
+  style?: React.CSSProperties;
+  className?: string;
+  onChange?: (date: Dayjs) => void;
 
-interface CalenderProps {
-  defaultValue?: Date;
-  value?: Date;
-  onChange?: (date: Date) => void;
+  // 附加内容
+  dateInnerContent?: (date: Dayjs) => React.ReactNode;
+  // 替换内容
+  dateRender?: (date: Dayjs) => React.ReactNode;
+  // 国际化
+  locale?: string;
+  // 今天
+  onToday?: () => void;
+  // 上个月
+  onPrev?: () => void;
+  // 下个月
+  onNext?: () => void;
 }
 
 function Calender(props: CalenderProps) {
-  const [date, setDate] = useControllableValue<Date>(props, {
-    defaultValue: new Date(),
+  const [value, setValue] = useControllableValue(props, {
+    defaultValue: props.defaultValue || dayjs(),
   });
 
-  // 切换月份
-  function handleMonth(direction: "prev" | "next") {
-    if (direction === "prev") {
-      const prevMonth = new Date(date.getFullYear(), date.getMonth() - 1, 1);
-      setDate(prevMonth);
-    } else {
-      const nextMonth = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-      setDate(nextMonth);
+  const [curMonth, setCurMonth] = useState<Dayjs>(value || dayjs());
+
+  useEffect(() => {
+    if (value) {
+      setCurMonth(value);
+      // console.log("curMonth", curMonth, value);
     }
-  }
-  // 点击日期
-  function handleDateClick(day: number) {
-    const curDate = new Date(date.getFullYear(), date.getMonth(), day);
-    setDate(curDate);
-    // props.onChange?.(curDate);
-  }
+  }, [value]);
 
-  // 获取当月的天数
-  function renderDays(year: number, month: number) {
-    const days = new Date(year, month + 1, 0).getDate(); // 获取当月天数
-    const firstDay = new Date(year, month, 1).getDay(); // 获取当月第一天是星期几
-    const today = new Date();
+  const handleChange = (newDate: Dayjs) => {
+    setValue(newDate);
+    setCurMonth(newDate);
+  };
 
-    const isToday = (day: number) => {
-      return (
-        today.getFullYear() === year &&
-        today.getMonth() === month &&
-        today.getDate() === day
-      );
-    };
+  const handlePrev = () => {
+    setCurMonth((curMonth || dayjs()).subtract(1, "month"));
+    props.onPrev?.();
+  };
 
-    const isSelected = (day: number) => {
-      return (
-        date &&
-        date.getFullYear() === year &&
-        date.getMonth() === month &&
-        date.getDate() === day
-      );
-    };
+  const handleNext = () => {
+    setCurMonth((curMonth || dayjs()).add(1, "month"));
+    props.onNext?.();
+  };
 
-    return (
-      <>
-        {/* 补齐上个月的空白天数 */}
-        {Array.from({ length: firstDay }, (_, index) => (
-          <div key={`blank-${index}`}></div>
-        ))}
-        {/* 当月的天数 */}
-        {Array.from({ length: days }, (_, index) => (
-          <div
-            key={index + 1}
-            className={
-              isToday(index + 1)
-                ? "today"
-                : isSelected(index + 1)
-                  ? "selected"
-                  : ""
-            }
-            onClick={() => handleDateClick(index + 1)}
-          >
-            {index + 1}
-          </div>
-        ))}
-      </>
-    );
-  }
+  const handleToday = () => {
+    const today = dayjs();
+    setCurMonth(today);
+    setValue(today);
+    props.onToday?.();
+  };
+
+  const mergedProps: CalenderProps = {
+    ...props,
+    value,
+    curMonth,
+    onChange: handleChange,
+    onPrev: handlePrev,
+    onNext: handleNext,
+    onToday: handleToday,
+  };
+
   return (
-    <div className="calendar-container">
-      <div className="header">
-        <button onClick={() => handleMonth("prev")}>{"<"}</button>
-        <span>
-          {date.getFullYear()}年{date.getMonth() + 1}月
-        </span>
-        <button onClick={() => handleMonth("next")}>{">"}</button>
+    <LocaleContent.Provider
+      value={{ locale: mergedProps.locale || navigator.language }}
+    >
+      <div
+        className={classNames("calendar-container", mergedProps.className)}
+        style={mergedProps.style}
+      >
+        <CalenderHeader {...mergedProps} />
+        <CalenderMonth {...mergedProps} />
       </div>
-      <div className="content">
-        <div>日</div>
-        <div>一</div>
-        <div>二</div>
-        <div>三</div>
-        <div>四</div>
-        <div>五</div>
-        <div>六</div>
-        {renderDays(date.getFullYear(), date.getMonth())}
-      </div>
-    </div>
+    </LocaleContent.Provider>
   );
 }
 
